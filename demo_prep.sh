@@ -2,7 +2,6 @@
 
 # Environment variables
 DEMO_DIR=`pwd`				; export DEMO_DIR
-#DEMO_DIR="/root/projects/efmdemo"	; export DEMO_DIR
 BIN_DIR=${DEMO_DIR}/scripts		; export BIN_DIR
 
 i=pg1
