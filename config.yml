@@ -1,4 +1,3 @@
----
 architecture: M1
 cluster_name: efmdemo
 cluster_tags:
@@ -13,17 +12,17 @@ cluster_vars:
   preferred_python_version: python3
   use_volatile_subscriptions: false
 
-#docker_networks:
-#- ipam_config:
-#  - subnet: 192.168.17.0/24
-#  name: tpanet
+docker_networks:
+- ipam_config:
+  - subnet: 192.168.17.0/24
+  name: tpanet
 
 locations:
 - Name: main
 - Name: dr
 
 instance_defaults:
-  image: tpa/rocky:8
+  image: tpa/ubuntu:20.04
   platform: docker
   vars:
     ansible_user: root
@@ -34,8 +33,8 @@ instances:
   location: main
   node: 1
   networks:
-  - ipv4_address: 192.168.65.11
-#    name: tpanet
+  - ipv4_address: 192.168.17.11
+    name: tpanet
   role:
   - primary
   - pem-agent
@@ -43,8 +42,8 @@ instances:
   location: main
   node: 2
   networks:
-  - ipv4_address: 192.168.65.12
-#    name: tpanet
+  - ipv4_address: 192.168.17.12
+    name: tpanet
   role:
   - replica
   - pem-agent
@@ -53,8 +52,8 @@ instances:
   location: main
   node: 3
   networks:
-  - ipv4_address: 192.168.65.13
-#    name: tpanet
+  - ipv4_address: 192.168.17.13
+    name: tpanet
   role:
   - barman
   - log-server
@@ -63,8 +62,8 @@ instances:
   location: dr
   node: 4
   networks:
-  - ipv4_address: 192.168.65.14
-#    name: tpanet
+  - ipv4_address: 192.168.17.14
+    name: tpanet
   role:
   - replica
   - pem-agent
@@ -73,8 +72,8 @@ instances:
   location: main
   node: 5
   networks:
-  - ipv4_address: 192.168.65.15
-#    name: tpanet
+  - ipv4_address: 192.168.17.15
+    name: tpanet
   role:
   - pem-server
 
