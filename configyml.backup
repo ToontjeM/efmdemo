@@ -1,0 +1,106 @@
+---
+architecture: M1
+cluster_name: efmdemo
+cluster_tags:
+  Owner: borys.neselovskyi@enterprisedb.com
+
+cluster_rules:
+- cidr_ip: 0.0.0.0/0
+  from_port: 22
+  proto: tcp
+  to_port: 22
+- cidr_ip: 10.33.53.128/28
+  from_port: 0
+  proto: tcp
+  to_port: 65535
+- cidr_ip: 10.33.186.96/28
+  from_port: 0
+  proto: tcp
+  to_port: 65535
+ec2_ami:
+  Name: debian-10-amd64-20210721-710
+  Owner: '136693071363'
+ec2_instance_reachability: public
+ec2_vpc:
+  Name: Test
+  cidr: 10.33.0.0/16
+
+cluster_vars:
+  enable_pg_backup_api: false
+  epas_redwood_compat: true
+  failover_manager: efm
+  postgres_version: '14'
+  postgresql_flavour: epas
+  preferred_python_version: python3
+  use_volatile_subscriptions: false
+
+locations:
+- Name: main
+  az: eu-central-1a
+  region: eu-central-1
+  subnet: 10.33.53.128/28
+- Name: dr
+  az: eu-central-1b
+  region: eu-central-1
+  subnet: 10.33.186.96/28
+
+instance_defaults:
+  default_volumes:
+  - device_name: root
+    encrypted: true
+    volume_size: 16
+    volume_type: gp2
+  - device_name: /dev/sdf
+    encrypted: true
+    vars:
+      volume_for: postgres_data
+    volume_size: 16
+    volume_type: gp2
+  platform: aws
+  type: t3.micro
+  vars:
+    ansible_user: admin
+
+instances:
+- Name: pg1
+  backup: barmansrv
+  location: main
+  node: 1
+  role:
+  - primary
+  - pem-agent
+- Name: pg2
+  location: main
+  node: 2
+  role:
+  - replica
+  - pem-agent
+  upstream: pg1
+- Name: barmansrv
+  location: main
+  node: 3
+  role:
+  - barman
+  - log-server
+  - monitoring-server
+  volumes:
+  - device_name: /dev/sdf
+    encrypted: true
+    vars:
+      volume_for: barman_data
+    volume_size: 32
+    volume_type: gp2
+- Name: pg3
+  location: dr
+  node: 4
+  role:
+  - replica
+  - pem-agent
+  upstream: pg2
+- Name: pemserver
+  location: main
+  node: 5
+  role:
+  - pem-server
+  platform: aws
+  type: t3.medium
