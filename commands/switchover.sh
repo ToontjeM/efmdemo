@@ -1,1 +1,0 @@
-/opt/EDB/TPA/architectures/M1/commands/switchover.sh

@@ -1,0 +1,71 @@
+---
+architecture: M1
+cluster_name: efmcluster
+cluster_tags:
+  Owner: ton.machielsen@enterprisedb.com
+
+keyring_backend: legacy
+vault_name: 61bc1e2a-e818-4382-b146-72c188b1bacf
+ssh_key_file: ~/.ssh/id_rsa
+
+cluster_vars:
+  apt_repository_list: []
+  edb_repositories:
+  - enterprise
+  failover_manager: efm
+  postgres_flavour: epas
+  postgres_version: '16'
+  preferred_python_version: python3
+  use_volatile_subscriptions: true
+  yum_repository_list:
+  - EPEL
+
+  efm_conf_settings:
+    local.timeout: 10
+    local.period: 5
+    application.name: app
+    ping.server.ip: 127.0.0.1
+    virtual.ip: 192.168.0.169
+    virtual.ip.prefix: 24
+    virtual.ip.interface: ens18
+    ping.server.command: '/bin/ping -q -c3 -w5'
+
+  postgres_conf_settings:
+    wal_level: replica
+    max_wal_senders: 10
+    wal_keep_size: 500
+    max_replication_slots: 10
+
+locations:
+- Name: main
+
+instance_defaults:
+  platform: bare
+  vars:
+    ansible_user: ton
+    manage_ssh_hostkeys: no
+
+instances:
+- Name: primary
+  backup: backup
+  location: main
+  node: 1
+  ip_address: 192.168.0.170
+  role:
+  - primary
+- Name: standby
+  location: main
+  node: 2
+  ip_address: 192.168.0.171
+  role:
+  - replica
+  upstream: primary
+- Name: backup
+  location: main
+  node: 3
+  ip_address: 192.168.0.172
+  role:
+  - witness
+  - barman
+  - log-server
+  upstream: primary
