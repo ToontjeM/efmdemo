@@ -8,7 +8,7 @@ This demo is based on pre-provisioned virtual machines, all software is deployed
 ## Demo prep
 The demo is based on three nodes, a primary Postgres node, a standby and a witness. All nodes are running the EFM agent and the witness is also running `barman` for continuous backup.
 
- Name VM | IP | Function |
+| Name VM | IP | Function |
 | --- | --- | --- |
 | efmprimary | 192.168.0.170 | Postgres primary |
 | efmstandby | 192.168.0.171 | Postgres standby |
@@ -121,8 +121,8 @@ uBSsR8kwbu76tD5*kUBd&r55UUMIy7g&
 ### EFM failover demo
 Open three terminal panes, one for each node and follow this flow:
 
-| --- | --- | --- |
 | Primary | Standby | Witness |
+| --- | --- | --- |
 | sudo su - efm | | sudo su - enterprisedb |
 
 ### Transparent Data encryption
