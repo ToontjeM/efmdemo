@@ -194,6 +194,7 @@ t are correct and that the postmaster is accepting TCP/IP connections.
 ```
 
 **Client**
+
 - Perform the same query as before (arrow up) to reconnect to the database.
   ```
   edb=# select count(*) from test;
@@ -207,7 +208,8 @@ t are correct and that the postmaster is accepting TCP/IP connections.
   -------
       10
   (1 row)
-```
+  ```
+
 - Reinsert a couple of new rows using the INSERT statement as before and perform the COUNT again.
   ```
   edb=# INSERT INTO test (random_text)
@@ -222,6 +224,3 @@ t are correct and that the postmaster is accepting TCP/IP connections.
   ```
 
 You can see that the cluster continues to be running with a new primary.
-
-### Barman
-
