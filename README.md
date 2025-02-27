@@ -118,14 +118,110 @@ uBSsR8kwbu76tD5*kUBd&r55UUMIy7g&
 ```
 
 ## Demo flow.
+- Explain what is deployed using the TPA template.
+
 ### EFM failover demo
-Open three terminal panes, one for each node and follow this flow:
+Open three terminal panes, one for the primary, one for the witness and one to a local machine which has the Postgres Client Tools installed.
 
-| Primary | Standby | Witness |
-| --- | --- | --- |
-| sudo su - efm | | sudo su - enterprisedb |
+**Witness**
 
-### Transparent Data encryption
+- Run a continous cluster status using `watch sudo /usr/edb/efm-4.9/bin/efm cluster-status efmcluster`.
+
+**Client**
+
+- Connect to the VIP address using `psql -h 192.168.0.169 -p 5444 -U enterprisedb edb`
+- Create a test database and insert random records in it.
+  ```
+  enterprisedb@primary:~ $ psql -h 192.168.0.169 -p 5444 -U enterprisedb edb
+  psql (16.8.0)                                                                                                                               
+  SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, compression: off)                                                        
+  Type "help" for help.                                                                                                                       
+  
+  edb=# CREATE TABLE test (id SERIAL PRIMARY KEY, random_text TEXT);                                                                                                                                    
+  CREATE TABLE                                                                                                                                
+  edb=# INSERT INTO test (random_text) SELECT md5(random()::text) FROM generate_series(1, 100);
+  INSERT 0 100
+  edb=# SELECT COUNT(*) FROM test;
+  count                                                                                                                                      
+  -------                                                                                                                                     
+    100                                                                                                                                      
+  (1 row)                                                                                                                                     
+                                                                                                                                          
+  edb=#
+  ```
+
+Show LSN updating on both nodes indicating that replication is working.
+
+**Primary**
+- Become user `enterprisedb` using `sudo su - enterprisedb`.
+- Stop postgres using `pg_ctl stop -D ${PGDATA}`
+
+Notice that EFM will detect Postgres not available and will performa a failover.
+
+```
+Every 2.0s: sudo /usr/edb/efm-4.9/bin/efm cluster-status efmcluster                                         backup: Tue Feb 25 10:54:35 2025
+
+Cluster Status: efmcluster
+
+        Agent Type  Address              DB       VIP
+        ----------------------------------------------------------------
+        Idle        192.168.0.170        UNKNOWN  192.168.0.169
+        Primary     192.168.0.171        UP       192.168.0.169*
+        Witness     192.168.0.172        N/A      192.168.0.169
+
+Allowed node host list:
+        192.168.0.171 192.168.0.170 192.168.0.172
+
+Membership coordinator: 192.168.0.171
+
+Standby priority host list:
+        (List is empty.)
+
+Promote Status:
+
+        DB Type     Address              WAL Received LSN   WAL Replayed LSN   Info
+        ---------------------------------------------------------------------------
+        Primary     192.168.0.171                           0/37013DB8
+
+        No standby databases were found.
+
+Idle Node Status (idle nodes ignored in WAL LSN comparisons):
+
+        Address              WAL Received LSN   WAL Replayed LSN   Info
+        ---------------------------------------------------------------
+        192.168.0.170        UNKNOWN            UNKNOWN            Connection to 192.168.0.170:5444 refused. Check that the hostname and por
+t are correct and that the postmaster is accepting TCP/IP connections.
+```
+
+**Client**
+- Perform the same query as before (arrow up) to reconnect to the database.
+  ```
+  edb=# select count(*) from test;
+  FATAL:  terminating connection due to administrator command
+  SSL connection has been closed unexpectedly
+  The connection to the server was lost. Attempting reset: Succeeded.
+  psql (17.2 (Homebrew), server 16.8.0)
+  SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, compression: off, ALPN: none)
+  edb=# select count(*) from test;
+   count 
+  -------
+      10
+  (1 row)
+```
+- Reinsert a couple of new rows using the INSERT statement as before and perform the COUNT again.
+  ```
+  edb=# INSERT INTO test (random_text)
+  SELECT md5(random()::text)
+  FROM generate_series(1, 100); -- Change 10 to any number of rows you want
+  INSERT 0 100
+  edb=# select count(*) from test;
+   count 
+  -------
+     110
+  (1 row)
+  ```
+
+You can see that the cluster continues to be running with a new primary.
 
 ### Barman
 
